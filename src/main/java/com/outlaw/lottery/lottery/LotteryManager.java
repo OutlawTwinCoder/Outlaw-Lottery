@@ -74,7 +74,15 @@ public class LotteryManager {
                 @SuppressWarnings("unchecked")
                 List<Integer> numbers = (List<Integer>) entry.get("numbers");
                 double amount = Double.parseDouble(entry.get("amount").toString());
-                long availableAt = ((Number) entry.getOrDefault("availableAt", System.currentTimeMillis())).longValue();
+                Object availableRaw = entry.get("availableAt");
+                long availableAt;
+                if (availableRaw == null) {
+                    availableAt = System.currentTimeMillis();
+                } else if (availableRaw instanceof Number number) {
+                    availableAt = number.longValue();
+                } else {
+                    availableAt = Long.parseLong(availableRaw.toString());
+                }
                 PendingReward reward = new PendingReward(id, owner, numbers, amount, availableAt);
                 pendingRewards.put(id, reward);
             } catch (Exception exception) {
