@@ -10,7 +10,7 @@ public record PendingReward(UUID ticketId, UUID owner, List<Integer> numbers, do
     public PendingReward {
         List<Integer> copy = new ArrayList<>(numbers);
         Collections.sort(copy);
-        this.numbers = Collections.unmodifiableList(copy);
+        numbers = Collections.unmodifiableList(copy);
     }
 
     public boolean isReady() {
