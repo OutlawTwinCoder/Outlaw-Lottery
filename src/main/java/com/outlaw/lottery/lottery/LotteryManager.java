@@ -13,22 +13,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 public class LotteryManager {
     private final OutlawLotteryPlugin plugin;
@@ -138,6 +132,17 @@ public class LotteryManager {
         return tickets.size();
     }
 
+    public long getTicketCount(UUID owner) {
+        return tickets.values().stream().filter(ticket -> ticket.owner().equals(owner)).count();
+    }
+
+    public List<Ticket> getTicketsForOwner(UUID owner) {
+        return tickets.values().stream()
+                .filter(ticket -> ticket.owner().equals(owner))
+                .sorted(Comparator.comparingLong(Ticket::purchaseTime))
+                .collect(Collectors.toList());
+    }
+
     public List<Integer> getLastWinningNumbers() {
         return lastWinningNumbers;
     }
@@ -197,82 +202,9 @@ public class LotteryManager {
             pendingRewards.put(ticket.id(), reward);
         }
 
-        removeLosingTicketItems(winners);
         tickets.clear();
         saveTickets();
         return Optional.of(new DrawResult(new ArrayList<>(drawnNumbers), winners, jackpot, claimAvailableAt));
-    }
-
-    private void removeLosingTicketItems(List<Ticket> winners) {
-        if (tickets.isEmpty()) {
-            return;
-        }
-        Set<UUID> winningIds = winners.stream().map(Ticket::id).collect(Collectors.toSet());
-        Map<UUID, Map<String, Long>> removalMap = new HashMap<>();
-        for (Ticket ticket : tickets.values()) {
-            if (winningIds.contains(ticket.id())) {
-                continue;
-            }
-            removalMap.computeIfAbsent(ticket.owner(), uuid -> new HashMap<>())
-                    .merge(formatNumbers(ticket.numbers()), 1L, Long::sum);
-        }
-        if (removalMap.isEmpty()) {
-            return;
-        }
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            Map<String, Long> counts = removalMap.get(player.getUniqueId());
-            if (counts == null || counts.isEmpty()) {
-                continue;
-            }
-            Inventory inventory = player.getInventory();
-            ItemStack[] contents = inventory.getContents();
-            boolean changed = false;
-            for (int slot = 0; slot < contents.length; slot++) {
-                ItemStack item = contents[slot];
-                if (item == null || item.getType() != Material.PAPER) {
-                    continue;
-                }
-                ItemMeta meta = item.getItemMeta();
-                if (meta == null || !meta.hasLore()) {
-                    continue;
-                }
-                String displayName = meta.hasDisplayName() ? ChatColor.stripColor(meta.getDisplayName()) : "";
-                if (!displayName.equalsIgnoreCase("Loto Ticket")
-                        && !displayName.equalsIgnoreCase("Ticket de Loto")) {
-                    continue;
-                }
-                List<String> lore = meta.getLore();
-                if (lore == null || lore.isEmpty()) {
-                    continue;
-                }
-                String numbersLine = ChatColor.stripColor(lore.get(0));
-                Long remaining = counts.get(numbersLine);
-                if (remaining == null || remaining <= 0) {
-                    continue;
-                }
-                int amount = item.getAmount();
-                int removeAmount = (int) Math.min(remaining, amount);
-                item.setAmount(amount - removeAmount);
-                if (item.getAmount() <= 0) {
-                    inventory.clear(slot);
-                } else {
-                    contents[slot] = item;
-                }
-                long newRemaining = remaining - removeAmount;
-                if (newRemaining <= 0) {
-                    counts.remove(numbersLine);
-                } else {
-                    counts.put(numbersLine, newRemaining);
-                }
-                changed = true;
-                if (counts.isEmpty()) {
-                    break;
-                }
-            }
-            if (changed) {
-                player.updateInventory();
-            }
-        }
     }
 
     private double calculateJackpot() {

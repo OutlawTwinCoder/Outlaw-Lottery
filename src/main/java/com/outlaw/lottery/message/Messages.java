@@ -32,6 +32,8 @@ public final class Messages {
         en.put("shop-title", "Outlaw Lottery");
         en.put("shop-buy", "§aBuy ticket");
         en.put("shop-info", "§7Price: §f%s");
+        en.put("shop-owned-title", "§eYour tickets");
+        en.put("shop-owned-count", "§7Owned: §f%s");
         en.put("next-draw", "Next draw in %s");
         en.put("shop-claim", "§bClaim reward");
         en.put("shop-claim-ready", "§7Ready: §f%s");
@@ -68,6 +70,8 @@ public final class Messages {
         fr.put("shop-title", "Loterie Outlaw");
         fr.put("shop-buy", "§aAcheter un billet");
         fr.put("shop-info", "§7Prix : §f%s");
+        fr.put("shop-owned-title", "§eVos billets");
+        fr.put("shop-owned-count", "§7Possédés : §f%s");
         fr.put("next-draw", "Prochain tirage dans %s");
         fr.put("shop-claim", "§bRécupérer le gain");
         fr.put("shop-claim-ready", "§7Prêt : §f%s");

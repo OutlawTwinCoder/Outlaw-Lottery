@@ -20,6 +20,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 public class ShopManager {
     private static final int BUY_SLOT = 3;
     private static final int CLAIM_SLOT = 5;
+    private static final int INFO_SLOT = 4;
 
     private final OutlawLotteryPlugin plugin;
     private final Set<Inventory> openInventories = new HashSet<>();
@@ -31,6 +32,7 @@ public class ShopManager {
     public Inventory createShop(Player player) {
         Inventory inventory = Bukkit.createInventory(null, 9, Messages.get(plugin.getLanguage(), "shop-title"));
         inventory.setItem(BUY_SLOT, buildBuyItem());
+        inventory.setItem(INFO_SLOT, buildInfoItem(player));
         inventory.setItem(CLAIM_SLOT, buildClaimItem(player));
         openInventories.add(inventory);
         return inventory;
@@ -79,7 +81,6 @@ public class ShopManager {
         }
         economy.withdrawPlayer(player, price);
         Ticket ticket = plugin.getLotteryManager().purchaseTicket(player);
-        giveTicketItem(player, ticket);
         player.sendMessage(Messages.get(plugin.getLanguage(), "prefix")
                 + Messages.get(plugin.getLanguage(), "ticket-purchased")
                         .formatted(plugin.getLotteryManager().formatNumbers(ticket.numbers())));
@@ -111,27 +112,30 @@ public class ShopManager {
             return;
         }
         top.setItem(BUY_SLOT, buildBuyItem());
+        top.setItem(INFO_SLOT, buildInfoItem(player));
         top.setItem(CLAIM_SLOT, buildClaimItem(player));
     }
 
-    private void giveTicketItem(Player player, Ticket ticket) {
-        ItemStack paper = new ItemStack(Material.PAPER);
-        ItemMeta meta = paper.getItemMeta();
-        String title = plugin.getLanguage() == com.outlaw.lottery.Language.FR ? "Ticket de Loto" : "Loto Ticket";
-        meta.setDisplayName("§e" + title);
-        meta.setLore(java.util.List.of("§7" + plugin.getLotteryManager().formatNumbers(ticket.numbers())));
-        paper.setItemMeta(meta);
-        player.getInventory().addItem(paper);
-    }
-
     private ItemStack buildBuyItem() {
-        ItemStack buyItem = new ItemStack(Material.PAPER);
+        ItemStack buyItem = new ItemStack(Material.EMERALD);
         ItemMeta meta = buyItem.getItemMeta();
         meta.setDisplayName(Messages.get(plugin.getLanguage(), "shop-buy"));
         meta.setLore(java.util.List.of(Messages.get(plugin.getLanguage(), "shop-info")
                 .formatted(String.format("%.2f", plugin.getTicketPrice()))));
         buyItem.setItemMeta(meta);
         return buyItem;
+    }
+
+    private ItemStack buildInfoItem(Player player) {
+        ItemStack infoItem = new ItemStack(Material.PAPER);
+        ItemMeta meta = infoItem.getItemMeta();
+        meta.setDisplayName(Messages.get(plugin.getLanguage(), "shop-owned-title"));
+        long count = plugin.getLotteryManager().getTicketCount(player.getUniqueId());
+        List<String> lore = new ArrayList<>();
+        lore.add(Messages.get(plugin.getLanguage(), "shop-owned-count").formatted(count));
+        meta.setLore(lore);
+        infoItem.setItemMeta(meta);
+        return infoItem;
     }
 
     private ItemStack buildClaimItem(Player player) {

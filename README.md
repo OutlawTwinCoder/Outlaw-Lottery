@@ -5,7 +5,8 @@ Plugin Spigot/Paper ajoutant un système de loterie bilingue (FR/EN) pour les se
 ## Fonctionnalités
 
 - NPC vendeur de billets (`/outlawlottery create npc`) ouvrant une interface d'achat.
-- Billets générés aléatoirement (4 numéros uniques entre 1 et 24) remis sur papier « Loto Ticket » / « Ticket de Loto ».
+- Billets générés aléatoirement (4 numéros uniques entre 1 et 24) stockés numériquement pour chaque joueur.
+- L'interface du NPC affiche en survol combien de billets un joueur possède actuellement et permet l'achat/encaissement.
 - Prix configurable (`/outlawlottery setprice <montant>`), cagnotte = billets vendus × prix × 1,75.
 - Tirage automatique toutes les 24 h (modifiable avec `/outlawlottery settime now` ou forcé via `/outlawlottery makelottery now`).
 - Gains mis de côté jusqu'à 23h59 : les gagnants doivent retourner voir le NPC pour récupérer leurs gains.
