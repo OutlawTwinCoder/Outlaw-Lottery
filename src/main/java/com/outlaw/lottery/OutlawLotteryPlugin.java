@@ -1,14 +1,12 @@
 package com.outlaw.lottery;
 
 import com.outlaw.lottery.command.LotteryCommand;
-import com.outlaw.lottery.hologram.FancyHologramService;
 import com.outlaw.lottery.lottery.LotteryManager;
 import com.outlaw.lottery.npc.NpcManager;
 import com.outlaw.lottery.shop.ShopListener;
 import com.outlaw.lottery.shop.ShopManager;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import net.milkbowl.vault.economy.Economy;
@@ -29,7 +27,6 @@ public class OutlawLotteryPlugin extends JavaPlugin {
     private ShopManager shopManager;
     private ShopListener shopListener;
     private NpcManager npcManager;
-    private FancyHologramService hologramService;
     private Economy economy;
     private Language language;
     private double ticketPrice;
@@ -44,13 +41,11 @@ public class OutlawLotteryPlugin extends JavaPlugin {
         shopManager = new ShopManager(this);
         shopListener = new ShopListener(shopManager);
         npcManager = new NpcManager(this);
-        hologramService = new FancyHologramService(this);
         getServer().getPluginManager().registerEvents(shopListener, this);
         getServer().getPluginManager().registerEvents(npcManager, this);
         setupEconomy();
         registerCommand(new LotteryCommand(this));
         scheduleDrawTask();
-        hologramService.refreshHologram();
     }
 
     @Override
@@ -113,10 +108,6 @@ public class OutlawLotteryPlugin extends JavaPlugin {
         return npcManager;
     }
 
-    public FancyHologramService getHologramService() {
-        return hologramService;
-    }
-
     public Economy getEconomy() {
         return economy;
     }
@@ -129,7 +120,6 @@ public class OutlawLotteryPlugin extends JavaPlugin {
         this.language = language;
         getConfig().set("language", language.name());
         saveConfig();
-        hologramService.refreshHologram();
     }
 
     public double getTicketPrice() {
@@ -140,7 +130,6 @@ public class OutlawLotteryPlugin extends JavaPlugin {
         this.ticketPrice = ticketPrice;
         getConfig().set("price", ticketPrice);
         saveConfig();
-        hologramService.refreshHologram();
     }
 
     public double getJackpotMultiplier() {
@@ -155,7 +144,6 @@ public class OutlawLotteryPlugin extends JavaPlugin {
         this.nextDraw = nextDraw;
         getConfig().set("next-draw", nextDraw.toEpochMilli());
         saveConfig();
-        hologramService.refreshHologram();
     }
 
     public void setNextDrawIn24h() {
@@ -180,10 +168,9 @@ public class OutlawLotteryPlugin extends JavaPlugin {
             setNextDrawIn24h();
             return;
         }
-        lotteryManager.drawLottery().ifPresentOrElse(result -> {
-            lotteryManager.announceWinners(language, result);
-            hologramService.updateWinnerDisplay();
-        }, () -> broadcast(com.outlaw.lottery.message.Messages.get(language, "no-tickets")));
+        lotteryManager.drawLottery().ifPresentOrElse(
+                result -> lotteryManager.announceWinners(language, result),
+                () -> broadcast(com.outlaw.lottery.message.Messages.get(language, "no-tickets")));
         setNextDrawIn24h();
     }
 

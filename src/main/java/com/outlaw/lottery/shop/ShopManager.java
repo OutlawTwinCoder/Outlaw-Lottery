@@ -84,24 +84,29 @@ public class ShopManager {
         player.sendMessage(Messages.get(plugin.getLanguage(), "prefix")
                 + Messages.get(plugin.getLanguage(), "ticket-purchased")
                         .formatted(plugin.getLotteryManager().formatNumbers(ticket.numbers())));
-        plugin.getHologramService().refreshHologram();
     }
 
     private void handleClaim(Player player) {
         LotteryManager.ClaimResult result = plugin.getLotteryManager().claimRewards(player);
         switch (result.state()) {
             case NONE -> plugin.sendMessage(player, "claim-none");
-            case TOO_EARLY -> {
-                PendingReward next = result.nextAvailable();
-                long remaining = next != null ? next.remainingMillis() : 0L;
-                plugin.sendMessage(player, "claim-too-early", formatDuration(remaining));
-            }
             case SUCCESS -> {
                 plugin.sendMessage(player, "claim-success", String.format("%.2f", result.amount()));
                 for (PendingReward reward : result.claimed()) {
                     player.sendMessage(Messages.get(plugin.getLanguage(), "prefix") + "§7" + reward.formatNumbers());
                 }
-                plugin.getHologramService().refreshHologram();
+                if (!result.expired().isEmpty()) {
+                    plugin.sendMessage(
+                            player,
+                            "claim-expired-some",
+                            result.expired().size());
+                }
+            }
+            case EXPIRED -> {
+                plugin.sendMessage(player, "claim-expired");
+                for (PendingReward reward : result.expired()) {
+                    player.sendMessage(Messages.get(plugin.getLanguage(), "prefix") + "§7" + reward.formatNumbers());
+                }
             }
         }
     }
@@ -144,20 +149,24 @@ public class ShopManager {
         meta.setDisplayName(Messages.get(plugin.getLanguage(), "shop-claim"));
         List<String> lore = new ArrayList<>();
         List<PendingReward> pending = plugin.getLotteryManager().getPendingRewards(player.getUniqueId());
+        List<PendingReward> active = pending.stream().filter(reward -> !reward.isExpired()).toList();
+        List<PendingReward> expired = pending.stream().filter(PendingReward::isExpired).toList();
         if (pending.isEmpty()) {
             lore.add(Messages.get(plugin.getLanguage(), "shop-claim-none"));
         } else {
-            List<PendingReward> ready = pending.stream().filter(PendingReward::isReady).toList();
-            if (!ready.isEmpty()) {
-                double total = ready.stream().mapToDouble(PendingReward::amount).sum();
-                lore.add(Messages.get(plugin.getLanguage(), "shop-claim-ready")
+            if (!active.isEmpty()) {
+                double total = active.stream().mapToDouble(PendingReward::amount).sum();
+                PendingReward nextDeadline = active.get(0);
+                lore.add(Messages.get(plugin.getLanguage(), "shop-claim-total")
                         .formatted(String.format("%.2f", total)));
-            } else {
-                PendingReward next = pending.get(0);
-                lore.add(Messages.get(plugin.getLanguage(), "shop-claim-wait")
-                        .formatted(formatDuration(next.remainingMillis())));
+                lore.add(Messages.get(plugin.getLanguage(), "shop-claim-deadline")
+                        .formatted(formatDuration(nextDeadline.remainingMillis())));
+                lore.add("§7" + nextDeadline.formatNumbers());
             }
-            lore.add("§7" + pending.get(0).formatNumbers());
+            if (!expired.isEmpty()) {
+                lore.add(Messages.get(plugin.getLanguage(), "shop-claim-expired")
+                        .formatted(expired.size()));
+            }
         }
         meta.setLore(lore);
         claimItem.setItemMeta(meta);

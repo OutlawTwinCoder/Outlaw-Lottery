@@ -26,7 +26,6 @@ public final class Messages {
         en.put("lottery-forced", "Lottery draw triggered manually.");
         en.put("debug-header", "§eLottery debug information:");
         en.put("debug-line", "§7%s: §f%s");
-        en.put("hologram-updated", "Lottery hologram updated.");
         en.put("no-npc", "No lottery NPC configured.");
         en.put("npc-removed", "Existing NPC removed.");
         en.put("shop-title", "Outlaw Lottery");
@@ -36,15 +35,15 @@ public final class Messages {
         en.put("shop-owned-count", "§7Owned: §f%s");
         en.put("next-draw", "Next draw in %s");
         en.put("shop-claim", "§bClaim reward");
-        en.put("shop-claim-ready", "§7Ready: §f%s");
-        en.put("shop-claim-wait", "§7Available in: §f%s");
+        en.put("shop-claim-total", "§7Total: §f%s");
+        en.put("shop-claim-deadline", "§7Expires in: §f%s");
+        en.put("shop-claim-expired", "§cExpired rewards: §f%s");
         en.put("shop-claim-none", "§7No pending reward.");
         en.put("claim-success", "You claimed %s. Congratulations!");
-        en.put("claim-too-early", "Your winnings will be available in %s.");
         en.put("claim-none", "You have no winnings to claim.");
-        en.put("winner-claim", "Visit the lottery NPC at 23:59 to claim your prize.");
-        en.put("hologram-winner", "§eWinners: §f%s §7| §e%s §7| §6%s");
-        en.put("hologram-claim", "§7Claim in %s");
+        en.put("claim-expired", "Your reward expired and was lost.");
+        en.put("claim-expired-some", "%s reward(s) expired before you could claim them.");
+        en.put("winner-claim", "Visit the lottery NPC before 23:59 to claim your prize.");
 
         Map<String, String> fr = new java.util.HashMap<>();
         fr.put("prefix", "§6[OutlawLottery]§r ");
@@ -64,7 +63,6 @@ public final class Messages {
         fr.put("lottery-forced", "Tirage lancé manuellement.");
         fr.put("debug-header", "§eInformations de débogage de la loterie :");
         fr.put("debug-line", "§7%s : §f%s");
-        fr.put("hologram-updated", "Hologramme de loterie mis à jour.");
         fr.put("no-npc", "Aucun NPC de loterie configuré.");
         fr.put("npc-removed", "NPC existant supprimé.");
         fr.put("shop-title", "Loterie Outlaw");
@@ -74,15 +72,15 @@ public final class Messages {
         fr.put("shop-owned-count", "§7Possédés : §f%s");
         fr.put("next-draw", "Prochain tirage dans %s");
         fr.put("shop-claim", "§bRécupérer le gain");
-        fr.put("shop-claim-ready", "§7Prêt : §f%s");
-        fr.put("shop-claim-wait", "§7Disponible dans : §f%s");
+        fr.put("shop-claim-total", "§7Total : §f%s");
+        fr.put("shop-claim-deadline", "§7Expire dans : §f%s");
+        fr.put("shop-claim-expired", "§cGains expirés : §f%s");
         fr.put("shop-claim-none", "§7Aucun gain en attente.");
         fr.put("claim-success", "Vous avez récupéré %s. Félicitations !");
-        fr.put("claim-too-early", "Votre gain sera disponible dans %s.");
         fr.put("claim-none", "Vous n'avez aucun gain à récupérer.");
-        fr.put("winner-claim", "Passez voir le NPC à 23:59 pour récupérer votre gain.");
-        fr.put("hologram-winner", "§eGagnants : §f%s §7| §e%s §7| §6%s");
-        fr.put("hologram-claim", "§7Récupération dans %s");
+        fr.put("claim-expired", "Votre gain a expiré et a été perdu.");
+        fr.put("claim-expired-some", "%s gain(s) ont expiré avant votre récupération.");
+        fr.put("winner-claim", "Passez voir le NPC avant 23:59 pour récupérer votre gain.");
 
         MESSAGES.put(Language.EN, en);
         MESSAGES.put(Language.FR, fr);

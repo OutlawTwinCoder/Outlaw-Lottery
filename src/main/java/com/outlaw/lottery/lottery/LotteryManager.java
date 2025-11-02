@@ -74,16 +74,16 @@ public class LotteryManager {
                 @SuppressWarnings("unchecked")
                 List<Integer> numbers = (List<Integer>) entry.get("numbers");
                 double amount = Double.parseDouble(entry.get("amount").toString());
-                Object availableRaw = entry.get("availableAt");
-                long availableAt;
-                if (availableRaw == null) {
-                    availableAt = System.currentTimeMillis();
-                } else if (availableRaw instanceof Number number) {
-                    availableAt = number.longValue();
+                Object deadlineRaw = entry.containsKey("deadline") ? entry.get("deadline") : entry.get("availableAt");
+                long deadline;
+                if (deadlineRaw == null) {
+                    deadline = System.currentTimeMillis();
+                } else if (deadlineRaw instanceof Number number) {
+                    deadline = number.longValue();
                 } else {
-                    availableAt = Long.parseLong(availableRaw.toString());
+                    deadline = Long.parseLong(deadlineRaw.toString());
                 }
-                PendingReward reward = new PendingReward(id, owner, numbers, amount, availableAt);
+                PendingReward reward = new PendingReward(id, owner, numbers, amount, deadline);
                 pendingRewards.put(id, reward);
             } catch (Exception exception) {
                 plugin.getLogger().log(Level.WARNING, "Failed to load pending reward entry: " + entry, exception);
@@ -113,7 +113,7 @@ public class LotteryManager {
             map.put("owner", reward.owner().toString());
             map.put("numbers", reward.numbers());
             map.put("amount", reward.amount());
-            map.put("availableAt", reward.availableAt());
+            map.put("deadline", reward.claimDeadline());
             pendingSerialized.add(map);
         }
         dataConfig.set("pending", pendingSerialized);
@@ -172,6 +172,10 @@ public class LotteryManager {
     }
 
     public Optional<DrawResult> drawLottery() {
+        boolean removedExpired = pendingRewards.entrySet().removeIf(entry -> entry.getValue().isExpired());
+        if (removedExpired) {
+            saveTickets();
+        }
         if (tickets.isEmpty()) {
             return Optional.empty();
         }
@@ -202,17 +206,16 @@ public class LotteryManager {
                 })
                 .collect(Collectors.toList());
 
-        long claimAvailableAt = lastDrawTime + Duration.ofHours(23).toMillis() + Duration.ofMinutes(59).toMillis();
+        long claimDeadline = lastDrawTime + Duration.ofHours(23).toMillis() + Duration.ofMinutes(59).toMillis();
         double share = winners.isEmpty() ? 0.0 : jackpot / winners.size();
         for (Ticket ticket : winners) {
-            PendingReward reward = new PendingReward(
-                    ticket.id(), ticket.owner(), ticket.numbers(), share, claimAvailableAt);
+            PendingReward reward = new PendingReward(ticket.id(), ticket.owner(), ticket.numbers(), share, claimDeadline);
             pendingRewards.put(ticket.id(), reward);
         }
 
         tickets.clear();
         saveTickets();
-        return Optional.of(new DrawResult(new ArrayList<>(drawnNumbers), winners, jackpot, claimAvailableAt));
+        return Optional.of(new DrawResult(new ArrayList<>(drawnNumbers), winners, jackpot, claimDeadline));
     }
 
     private double calculateJackpot() {
@@ -260,7 +263,7 @@ public class LotteryManager {
     public List<PendingReward> getPendingRewards(UUID owner) {
         return pendingRewards.values().stream()
                 .filter(reward -> reward.owner().equals(owner))
-                .sorted(Comparator.comparingLong(PendingReward::availableAt))
+                .sorted(Comparator.comparingLong(PendingReward::claimDeadline))
                 .collect(Collectors.toList());
     }
 
@@ -271,22 +274,22 @@ public class LotteryManager {
     public ClaimResult claimRewards(Player player) {
         List<PendingReward> pending = getPendingRewards(player.getUniqueId());
         if (pending.isEmpty()) {
-            return new ClaimResult(ClaimState.NONE, 0.0, List.of(), null);
+            return new ClaimResult(ClaimState.NONE, 0.0, List.of(), List.of());
         }
-        List<PendingReward> ready = pending.stream().filter(PendingReward::isReady).collect(Collectors.toList());
-        if (ready.isEmpty()) {
-            PendingReward next = pending.stream()
-                    .min(Comparator.comparingLong(PendingReward::availableAt))
-                    .orElse(null);
-            return new ClaimResult(ClaimState.TOO_EARLY, 0.0, List.of(), next);
+        List<PendingReward> expired = pending.stream().filter(PendingReward::isExpired).collect(Collectors.toList());
+        expired.forEach(reward -> pendingRewards.remove(reward.ticketId()));
+        List<PendingReward> claimable = pending.stream().filter(reward -> !reward.isExpired()).collect(Collectors.toList());
+        if (claimable.isEmpty()) {
+            saveTickets();
+            return new ClaimResult(ClaimState.EXPIRED, 0.0, List.of(), expired);
         }
-        double total = ready.stream().mapToDouble(PendingReward::amount).sum();
-        ready.forEach(reward -> pendingRewards.remove(reward.ticketId()));
+        double total = claimable.stream().mapToDouble(PendingReward::amount).sum();
+        claimable.forEach(reward -> pendingRewards.remove(reward.ticketId()));
         saveTickets();
         if (plugin.getEconomy() != null) {
             plugin.getEconomy().depositPlayer(player, total);
         }
-        return new ClaimResult(ClaimState.SUCCESS, total, ready, null);
+        return new ClaimResult(ClaimState.SUCCESS, total, claimable, expired);
     }
 
     private List<Integer> generateCombination() {
@@ -328,13 +331,13 @@ public class LotteryManager {
         plugin.broadcast(Messages.get(language, "winner-claim"));
     }
 
-    public record DrawResult(List<Integer> numbers, List<Ticket> winners, double jackpot, long claimAvailableAt) {}
+    public record DrawResult(List<Integer> numbers, List<Ticket> winners, double jackpot, long claimDeadline) {}
 
     public enum ClaimState {
         NONE,
-        TOO_EARLY,
+        EXPIRED,
         SUCCESS
     }
 
-    public record ClaimResult(ClaimState state, double amount, List<PendingReward> claimed, PendingReward nextAvailable) {}
+    public record ClaimResult(ClaimState state, double amount, List<PendingReward> claimed, List<PendingReward> expired) {}
 }

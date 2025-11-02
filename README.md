@@ -9,9 +9,8 @@ Plugin Spigot/Paper ajoutant un système de loterie bilingue (FR/EN) pour les se
 - L'interface du NPC affiche en survol combien de billets un joueur possède actuellement et permet l'achat/encaissement.
 - Prix configurable (`/outlawlottery setprice <montant>`), cagnotte = billets vendus × prix × 1,75.
 - Tirage automatique toutes les 24 h (modifiable avec `/outlawlottery settime now` ou forcé via `/outlawlottery makelottery now`).
-- Gains mis de côté jusqu'à 23h59 : les gagnants doivent retourner voir le NPC pour récupérer leurs gains.
+- Gains disponibles immédiatement après le tirage mais doivent être récupérés avant 23h59 sinon ils expirent.
 - Support Vault pour prélever les achats et verser les gains à la demande.
-- Hologramme FancyHolograms affichant prix, prochain tirage et le dernier ticket gagnant au-dessus du NPC pendant 24 h.
 - Traductions EN/FR sélectionnables (`/outlawlottery language en|fr`).
 
 ## Commandes principales
@@ -21,7 +20,7 @@ Plugin Spigot/Paper ajoutant un système de loterie bilingue (FR/EN) pour les se
 | `/outlawlottery language <fr|en>` | Change la langue des messages. |
 | `/outlawlottery create npc` | Crée/déplace le NPC vendeur à votre position. |
 | `/outlawlottery setprice <montant>` | Définit le prix d'un billet. |
-| `/outlawlottery remove npc` | Supprime le NPC et son hologramme. |
+| `/outlawlottery remove npc` | Supprime le NPC et ses données enregistrées. |
 | `/outlawlottery settime now` | Redémarre un cycle de 24 h à partir de maintenant. |
 | `/outlawlottery makelottery now` | Lance immédiatement un tirage (tests). |
 | `/outlawlottery debug` | Affiche l'état courant (prix, billets vendus, prochaine heure de tirage). |
@@ -31,7 +30,6 @@ Toutes les commandes requièrent la permission `outlawlottery.admin` (OP par dé
 ## Dépendances
 
 - [Vault](https://www.spigotmc.org/resources/vault.34315/) (économie).
-- [FancyHolograms](https://modrinth.com/plugin/fancyholograms) pour l'affichage.
 - Serveur Paper 1.20.4+ conseillé.
 
 Compilez avec Maven :

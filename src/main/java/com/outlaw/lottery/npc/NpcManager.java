@@ -39,7 +39,6 @@ public class NpcManager implements Listener {
         villager.getEquipment().setItemInMainHand(new ItemStack(Material.PAPER));
         npcId = villager.getUniqueId();
         plugin.setNpcLocation(location, npcId);
-        plugin.getHologramService().spawnOrUpdateHologram(villager.getLocation().add(0, 2.2, 0));
     }
 
     public void cleanupNpc() {
@@ -56,7 +55,6 @@ public class NpcManager implements Listener {
     public void deleteNpc() {
         cleanupNpc();
         plugin.removeStoredNpc();
-        plugin.getHologramService().removeHologram();
     }
 
     private void refreshNpc() {
