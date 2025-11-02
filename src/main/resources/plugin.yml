@@ -1,0 +1,14 @@
+name: OutlawLottery
+main: com.outlaw.lottery.OutlawLotteryPlugin
+version: 1.0.0
+api-version: "1.20"
+author: Outlaw
+commands:
+  outlawlottery:
+    description: Manage the Outlaw Lottery
+    usage: /outlawlottery
+    aliases: [olotto]
+permissions:
+  outlawlottery.admin:
+    description: Access to all Outlaw Lottery admin commands
+    default: op
